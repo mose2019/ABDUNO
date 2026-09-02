@@ -169,6 +169,13 @@ io.on('connection', (socket) => {
 
     // Remove played cards from hand
     player.hand = player.hand.filter((_, idx) => !cardIndices.includes(idx));
+    
+    // Check for Win Condition
+    if (player.hand.length === 0) {
+    io.to(roomId).emit('gameOver', { winner: player.name });
+    io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `🏆 ${player.name} has won the game!` });
+    return; // Stop further execution for this turn
+    }
 
     // Update Top Card
     let newTopCard = { ...playedCards[playedCards.length - 1] };

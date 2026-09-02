@@ -263,6 +263,59 @@ socket.on("gameStateUpdate", (state) => {
     });
   }
 });
+// Update Stack Counter dynamically from game state
+socket.on('gameStateUpdate', (state) => {
+  const stackBanner = document.getElementById('stack-counter-banner');
+  const stackNum = document.getElementById('stack-count-num');
+  
+  if (state.drawStack > 0) {
+    stackNum.innerText = state.drawStack;
+    stackBanner.style.display = 'block';
+  } else {
+    stackBanner.style.display = 'none';
+  }
+  
+  // ... keep the rest of your existing gameStateUpdate code here ...
+});
+
+// Handle Victory & Fireworks
+socket.on('gameOver', ({ winner }) => {
+  const modal = document.getElementById('victory-modal');
+  const winnerText = document.getElementById('winner-text');
+  winnerText.innerText = `${winner} WINS!`;
+  modal.style.display = 'flex';
+  
+  // Trigger fireworks particle effect
+  launchFireworks();
+});
+
+function launchFireworks() {
+  const container = document.querySelector('.fireworks-container');
+  const colors = ['#ff4757', '#2ed573', '#ffa502', '#1e90ff', '#9b59b6', '#ffd700'];
+  
+   for (let i = 0; i < 5; i++) {
+    setTimeout(() => {
+      const x = window.innerWidth * (0.2 + Math.random() * 0.6);
+      const y = window.innerHeight * (0.2 + Math.random() * 0.4);
+      
+      for (let j = 0; j < 30; j++) {
+        const spark = document.createElement('div');
+        spark.classList.add('firework-spark');
+        spark.style.left = `${x}px`;
+        spark.style.top = `${y}px`;
+        spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+        
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 50 + Math.random() * 150;
+        spark.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
+        spark.style.setProperty('--dy', `${Math.sin(angle) * distance}px`);
+        
+        container.appendChild(spark);
+        setTimeout(() => spark.remove(), 1000);
+      }
+    }, i * 400);
+  }
+}
 
 // Play Flow with Madelon Mode & Wild Color Selection
 if (playBtn) {
