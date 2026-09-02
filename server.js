@@ -329,4 +329,4 @@ function broadcastGameState(roomId) {
 }
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`ABDU-NO active on http://localhost:${PORT}`));
+server.listen(PORT, '0.0.0.0', () => console.log(`ABDU-NO active on port ${PORT}`));
