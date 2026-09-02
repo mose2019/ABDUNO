@@ -107,7 +107,7 @@ io.on('connection', (socket) => {
     broadcastGameState(roomId);
   });
 
-  socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
+socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
     const room = rooms[roomId];
     if (!room) return;
 
@@ -128,7 +128,7 @@ io.on('connection', (socket) => {
 
     // Stack Interception Rules
     if (room.drawStack > 0) {
-      const isPlusCard = firstCard.value === '+2' || firstCard.value === '+4';
+      const isPlusCard = firstCard.value === '+2' || firstCard.value === '+4' || firstCard.value === 'madelon';
       const isMadelonNullify = (firstCard.value === 'madelon' && madelonMode === 'nullify');
       const isColorMatchSkip = (firstCard.value === 'skip' && firstCard.color === top.color);
       const isColorMatchReverse = (firstCard.value === 'reverse' && firstCard.color === top.color);
@@ -147,16 +147,15 @@ io.on('connection', (socket) => {
       if (!isValidPlay) return socket.emit('errorMessage', 'Invalid move! Card color or value does not match.');
     }
 
-    // Process Madelon Rules & Per-Round Usage Limits
+ // Process Madelon Rules & Per-Round Usage Limits
     if (firstCard.value === 'madelon') {
-      if (madelonMode === '+6') {
-        if (player.usedMadelonPlus6) return socket.emit('errorMessage', 'You have already used Madelon +6 this round!');
-        player.usedMadelonPlus6 = true;
-        room.drawStack += 6;
-      } else if (madelonMode === 'nullify') {
+      if (madelonMode === 'nullify') {
         if (player.usedMadelonNullify) return socket.emit('errorMessage', 'You have already used Madelon Nullify this round!');
         player.usedMadelonNullify = true;
         room.drawStack = 0;
+      } else {
+        if (player.usedMadelonPlus6) return socket.emit('errorMessage', 'You have already used Madelon +6 this round!');
+        player.usedMadelonPlus6 = true;
       }
     }
 
@@ -164,8 +163,10 @@ io.on('connection', (socket) => {
     playedCards.forEach(card => {
       if (card.value === '+2') room.drawStack += 2;
       if (card.value === '+4') room.drawStack += 4;
+      if (card.value === 'madelon' && madelonMode !== 'nullify') room.drawStack += 6;
       room.discardPile.push(card);
     });
+
 
     // Remove played cards from hand
     player.hand = player.hand.filter((_, idx) => !cardIndices.includes(idx));
