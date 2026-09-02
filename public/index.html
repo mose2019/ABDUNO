@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ABDU-NO Online</title>
+  <style>
+    :root {
+      --bg-dark: #0b0f19;
+      --panel-bg: rgba(15, 23, 42, 0.85);
+      --accent-blue: #38bdf8;
+      --accent-gold: #d4af37;
+      --border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-dark); color: #ffffff; height: 100vh; overflow: hidden; }
+
+    #lobby-screen { text-align: center; display: flex; flex-direction: column; gap: 15px; justify-content: center; align-items: center; height: 100vh; }
+    .lobby-box { background: #1e293b; padding: 30px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; width: 320px; }
+    input { padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: #0f172a; color: white; width: 100%; text-align: center; }
+    button { padding: 12px 24px; font-size: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background: var(--accent-blue); color: #0f172a; transition: all 0.2s; }
+    button:hover { background: #7dd3fc; transform: translateY(-2px); }
+
+    #game-screen { display: none; width: 100vw; height: 100vh; position: relative; }
+
+    #left-sidebar { position: absolute; left: 20px; top: 20px; bottom: 20px; width: 260px; background: var(--panel-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 10; }
+    .sidebar-title { font-weight: bold; font-size: 14px; letter-spacing: 1px; color: var(--accent-blue); text-transform: uppercase; }
+    .player-card { background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; }
+    .player-card.active { border-color: var(--accent-blue); background: rgba(56, 189, 248, 0.1); }
+    .room-display { background: #0f172a; border: 1px solid var(--border-color); padding: 8px; border-radius: 6px; text-align: center; font-weight: bold; font-size: 14px; color: var(--accent-blue); }
+
+    #right-sidebar { position: absolute; right: 20px; top: 20px; bottom: 20px; width: 300px; background: var(--panel-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 16px; padding: 15px; display: flex; flex-direction: column; gap: 12px; z-index: 10; }
+    
+    .spotify-controls { display: flex; gap: 6px; }
+    .spotify-controls input { text-align: left; padding: 8px; font-size: 12px; }
+    .spotify-controls button { padding: 8px 12px; font-size: 12px; }
+    #spotify-container { width: 100%; height: 150px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--border-color); margin-top: 4px; }
+    #spotify-container iframe { width: 100%; height: 100%; border: none; }
+
+    #chat-box { flex: 1; background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+    .chat-input-row { display: flex; gap: 8px; }
+    .chat-input-row input { flex: 1; padding: 8px; text-align: left; }
+
+    #table-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%); width: 420px; height: 420px; }
+    #direction-ring { position: absolute; inset: 0; width: 420px; height: 420px; animation: spin-cw 16s linear infinite; pointer-events: none; }
+    #direction-ring.reverse { animation: spin-ccw 16s linear infinite; }
+
+    @keyframes spin-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes spin-ccw { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+
+    #center-cards { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: row; gap: 20px; z-index: 5; }
+
+    .card { width: 90px; height: 135px; border-radius: 10px; background-size: cover; background-repeat: no-repeat; background-position: center; border: 1px solid rgba(255, 255, 255, 0.2); transition: transform 0.2s; box-shadow: 0 8px 16px rgba(0,0,0,0.4); flex-shrink: 0; background-color: #1e293b; position: relative; }
+    .card.selected { transform: translateY(-20px); border: 2px solid var(--accent-gold); }
+
+    /* Madelon Card Special Animation */
+    .card.madelon-card {
+      animation: madelonGlow 2s infinite alternate, madelonFloat 3s ease-in-out infinite;
+      border: 2px solid #a855f7 !important;
+    }
+
+    @keyframes madelonGlow {
+      0% { box-shadow: 0 0 10px #a855f7, 0 0 20px #ec4899; }
+      100% { box-shadow: 0 0 25px #3b82f6, 0 0 40px #a855f7; }
+    }
+
+    @keyframes madelonFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-10px) rotate(2deg); }
+    }
+
+    /* Stack Badge Sign */
+    .stack-badge {
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 14px;
+      border: 2px solid #ffffff;
+      box-shadow: 0 4px 10px rgba(239, 68, 68, 0.6);
+      z-index: 30;
+      animation: pulseBadge 1s infinite alternate;
+    }
+
+    @keyframes pulseBadge {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.15); }
+    }
+
+    #bottom-dock { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 20; width: 90%; }
+    .action-bar { display: flex; gap: 12px; }
+    .btn-abduno { background: #ef4444; color: white; }
+    .btn-play { background: #10b981; color: white; }
+    
+    #my-hand { display: flex; gap: -20px; padding: 10px; max-width: 100%; overflow-x: auto; justify-content: center; min-height: 155px; }
+    #my-hand .card { margin-left: -20px; cursor: pointer; }
+    #my-hand .card:first-child { margin-left: 0; }
+    #my-hand .card:hover { transform: translateY(-15px); z-index: 30; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; }
+    .modal-box { background: #1e293b; padding: 25px; border-radius: 16px; text-align: center; display: flex; flex-direction: column; gap: 15px; }
+    .color-grid { display: flex; gap: 10px; justify-content: center; }
+    .color-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <div id="lobby-screen">
+    <h1 style="color: var(--accent-blue); margin-bottom: 10px;">ABDU-NO ONLINE</h1>
+    <div class="lobby-box">
+      <input type="text" id="player-name" placeholder="Enter Your Name" />
+      <button id="create-room-btn">Create Room</button>
+      <hr style="border-color: var(--border-color); margin: 5px 0;">
+      <input type="text" id="room-code-input" placeholder="Enter Room Code" style="text-transform:uppercase;" />
+      <button id="join-room-btn" style="background: #10b981; color: white;">Join Room</button>
+    </div>
+  </div>
+
+  <div id="game-screen">
+    <div id="left-sidebar">
+      <div class="sidebar-title">Room</div>
+      <div class="room-display">CODE: <span id="display-room-code">----</span></div>
+      <div class="sidebar-title" style="margin-top: 10px;">Players</div>
+      <div id="player-list"></div>
+    </div>
+
+    <div id="table-area">
+      <svg id="direction-ring" viewBox="0 0 420 420">
+        <defs>
+          <marker id="arrow-head" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#38bdf8" />
+          </marker>
+          <marker id="arrow-head-gold" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#d4af37" />
+          </marker>
+        </defs>
+        <path class="arrow-path" d="M 110,60 A 180,180 0 0,1 310,60" fill="none" stroke="#38bdf8" stroke-width="4" stroke-dasharray="8 6" marker-end="url(#arrow-head)" />
+        <path class="arrow-path" d="M 360,110 A 180,180 0 0,1 360,310" fill="none" stroke="#38bdf8" stroke-width="4" stroke-dasharray="8 6" marker-end="url(#arrow-head)" />
+        <path class="arrow-path" d="M 310,360 A 180,180 0 0,1 110,360" fill="none" stroke="#38bdf8" stroke-width="4" stroke-dasharray="8 6" marker-end="url(#arrow-head)" />
+        <path class="arrow-path" d="M 60,310 A 180,180 0 0,1 60,110" fill="none" stroke="#38bdf8" stroke-width="4" stroke-dasharray="8 6" marker-end="url(#arrow-head)" />
+      </svg>
+
+      <div id="center-cards">
+        <div id="draw-pile" class="card" style="border: 2px dashed #475569; cursor: pointer;"></div>
+        <div id="discard-pile" class="card"></div>
+      </div>
+    </div>
+
+    <div id="right-sidebar">
+      <div class="sidebar-title">Spotify Player</div>
+      <div class="spotify-controls">
+        <input type="text" id="spotify-link-input" placeholder="Paste Spotify URL or Search term..." />
+        <button id="load-spotify-btn">Load</button>
+      </div>
+      <div id="spotify-container">
+        <iframe id="spotify-frame" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&theme=0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+      </div>
+      
+      <div class="sidebar-title" style="margin-top: 10px;">Room Chat</div>
+      <div id="chat-box"></div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Message..." />
+        <button id="send-chat-btn" style="padding: 6px 12px; font-size: 12px;">Send</button>
+      </div>
+    </div>
+
+    <div id="bottom-dock">
+      <div class="action-bar">
+        <button id="abduno-btn" class="btn-abduno">ABDU NO!</button>
+        <button id="play-btn" class="btn-play">PLAY SELECTED</button>
+      </div>
+      <div id="my-hand"></div>
+    </div>
+  </div>
+
+  <div id="choice-modal" class="modal-overlay">
+    <div class="modal-box">
+      <h3>Choose Next Color</h3>
+      <div class="color-grid">
+        <button class="color-btn" style="background:#ef4444;" onclick="chooseColor('red')"></button>
+        <button class="color-btn" style="background:#3b82f6;" onclick="chooseColor('blue')"></button>
+        <button class="color-btn" style="background:#10b981;" onclick="chooseColor('green')"></button>
+        <button class="color-btn" style="background:#f59e0b;" onclick="chooseColor('yellow')"></button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
