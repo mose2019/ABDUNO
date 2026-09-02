@@ -189,39 +189,39 @@
       </div>
     </div>
   </div>
-  <!-- Draw Stack Banner (Displays when someone is stacking +2/+4) -->
-<div id="stack-counter-banner" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff4757; color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 1.2rem; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: pulse 1s infinite;">
-  ⚠️ Stack Penalty: <span id="stack-count-num">0</span> Cards!
-</div>
 
-<!-- Victory Fireworks Overlay -->
-<div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; text-align: center;">
-  <div class="fireworks-container"></div>
-  <h1 id="winner-text" style="color: #ffd700; font-size: 3.5rem; text-shadow: 0 0 20px #ff4500; margin-bottom: 10px;"></h1>
-  <p style="color: white; font-size: 1.5rem;">Has conquered ABDU-NO!</p>
-  <button onclick="location.reload()" style="margin-top: 30px; padding: 12px 30px; font-size: 1.2rem; background: #2ed573; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Play Again</button>
-</div>
+  <!-- Draw Stack Banner -->
+  <div id="stack-counter-banner" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff4757; color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 1.2rem; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: pulse 1s infinite;">
+    ⚠️ Stack Penalty: <span id="stack-count-num">0</span> Cards!
+  </div>
 
-<style>
-@keyframes pulse {
-  0% { transform: translateX(-50%) scale(1); }
-  50% { transform: translateX(-50%) scale(1.08); }
-  100% { transform: translateX(-50%) scale(1); }
-}
+  <!-- Victory Fireworks Overlay -->
+  <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; text-align: center;">
+    <div class="fireworks-container"></div>
+    <h1 id="winner-text" style="color: #ffd700; font-size: 3.5rem; text-shadow: 0 0 20px #ff4500; margin-bottom: 10px;"></h1>
+    <p style="color: white; font-size: 1.5rem;">Has conquered ABDU-NO!</p>
+    <button onclick="location.reload()" style="margin-top: 30px; padding: 12px 30px; font-size: 1.2rem; background: #2ed573; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Play Again</button>
+  </div>
 
-/* Simple CSS Fireworks Sparkles */
-.firework-spark {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  animation: explode 1s ease-out forwards;
-}
-@keyframes explode {
-  0% { transform: translate(0, 0) scale(1); opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
-}
-</style>
+  <style>
+  @keyframes pulse {
+    0% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.08); }
+    100% { transform: translateX(-50%) scale(1); }
+  }
+
+  .firework-spark {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: explode 1s ease-out forwards;
+  }
+  @keyframes explode {
+    0% { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+  }
+  </style>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
