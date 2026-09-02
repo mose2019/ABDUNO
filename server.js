@@ -172,9 +172,9 @@ io.on('connection', (socket) => {
     
     // Check for Win Condition
     if (player.hand.length === 0) {
-      io.to(roomId).emit('gameOver', { winner: player.name });
-      io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `🏆 ${player.name} has won the game!` });
-      return; // Stop further execution for this turn
+    io.to(roomId).emit('gameOver', { winner: player.name });
+    io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `🏆 ${player.name} has won the game!` });
+    return; // Stop further execution for this turn
     }
 
     // Update Top Card
@@ -311,7 +311,7 @@ function drawPenaltyCards(room, player, count) {
       if (room.discardPile.length <= 1) break;
       room.deck = shuffle(room.discardPile.splice(0, room.discardPile.length - 1));
     }
-    if (room.deck.length > 0) player.hand.pop(); // Wait, keep push!
+    if (room.deck.length > 0) player.hand.push(room.deck.pop());
   }
 }
 
