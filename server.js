@@ -208,7 +208,7 @@ io.on('connection', (socket) => {
     // Check for Win Condition
     if (player.hand.length === 0) {
       io.to(roomId).emit('gameOver', { winner: player.name });
-      io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `🏆 ${player.name} has won the game!` });
+      io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `${player.name} wins the game.` });
       return; 
     }
 
@@ -227,7 +227,7 @@ io.on('connection', (socket) => {
 
     let step = 1;
 
-    // 2-Player Logic Adjustments for Skip and Reverse
+    // 2-Player vs Multi-Player Logic Adjustments for Skip and Reverse
     if (room.players.length === 2) {
       if (skipCount > 0 || (reverseCount % 2 !== 0)) {
         step = 0; 
@@ -236,18 +236,13 @@ io.on('connection', (socket) => {
       if (skipCount > 0) step += skipCount;
     }
 
-    // Clear active stack penalty if intercepted by a matching Skip or Reverse
-    if (room.drawStack > 0 && (skipCount > 0 || reverseCount > 0)) {
-      room.drawStack = 0;
-    }
-
     // Check ABDU-NO state & 5-Second Penalty Timer Initiation
     if (player.hand.length === 1 && !player.calledAbduno) {
       if (player.abdunoTimer) clearTimeout(player.abdunoTimer);
       player.abdunoTimer = setTimeout(() => {
         if (player.hand.length === 1 && !player.calledAbduno) {
           drawPenaltyCards(room, player, 2);
-          io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `⚠️ ${player.name} failed to call ABDU-NO in 5s! +2 Penalty.` });
+          io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `${player.name} failed to call ABDU-NO in time and draws 2 penalty cards.` });
           socket.emit('handUpdate', player.hand);
           broadcastGameState(roomId);
         }
@@ -311,7 +306,7 @@ io.on('connection', (socket) => {
       if (target && target.hand.length === 1 && !target.calledAbduno) {
         if (target.abdunoTimer) clearTimeout(target.abdunoTimer);
         drawPenaltyCards(room, target, 2);
-        io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `🎯 ${caller.name} called out ${target.name}! ${target.name} receives a 2-card penalty.` });
+        io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `${caller.name} called out ${target.name}, who receives a 2-card penalty.` });
         io.to(target.id).emit('handUpdate', target.hand);
         broadcastGameState(roomId);
       }
@@ -321,7 +316,7 @@ io.on('connection', (socket) => {
     if (caller && caller.hand.length === 1) {
       caller.calledAbduno = true;
       if (caller.abdunoTimer) clearTimeout(caller.abdunoTimer);
-      io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `🔥 ${caller.name} called ABDU-NO!` });
+      io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `${caller.name} called ABDU-NO.` });
     } else if (caller) {
       drawPenaltyCards(room, caller, 2);
       socket.emit('handUpdate', caller.hand);
