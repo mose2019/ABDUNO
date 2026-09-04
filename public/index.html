@@ -42,7 +42,8 @@
     .chat-input-row { display: flex; gap: 8px; }
     .chat-input-row input { flex: 1; padding: 8px; text-align: left; }
 
-    #table-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%); width: 420px; height: 420px; }
+    /* Added perspective for true 3D card spins */
+    #table-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%); width: 420px; height: 420px; perspective: 1000px; }
     #direction-ring { position: absolute; inset: 0; width: 420px; height: 420px; animation: spin-cw 16s linear infinite; pointer-events: none; }
     #direction-ring.reverse { animation: spin-ccw 16s linear infinite; }
 
@@ -54,20 +55,35 @@
     .card { width: 90px; height: 135px; border-radius: 10px; background-size: cover; background-repeat: no-repeat; background-position: center; border: 1px solid rgba(255, 255, 255, 0.2); transition: transform 0.2s; box-shadow: 0 8px 16px rgba(0,0,0,0.4); flex-shrink: 0; background-color: #1e293b; position: relative; }
     .card.selected { transform: translateY(-20px); border: 2px solid var(--accent-gold); }
 
-    /* Madelon Card Special Animation */
+    /* Madelon Card Special Animation (Spider-Man Cinematic Suit Spin Style) */
     .card.madelon-card {
-      animation: madelonGlow 2s infinite alternate, madelonFloat 3s ease-in-out infinite;
+      animation: madelonGlow 2s infinite alternate, madelonCinematicSpin 1.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
       border: 2px solid #a855f7 !important;
+      transform-style: preserve-3d;
+    }
+
+    @keyframes madelonCinematicSpin {
+      0% {
+        transform: scale(0.8) rotateY(0deg) translateY(20px);
+        filter: brightness(0.7) blur(2px);
+      }
+      40% {
+        transform: scale(1.35) rotateY(360deg) translateY(-15px);
+        filter: brightness(1.4) drop-shadow(0 0 25px rgba(168, 85, 247, 0.9));
+      }
+      70% {
+        transform: scale(1.25) rotateY(720deg) translateY(-5px);
+        filter: brightness(1.2) drop-shadow(0 0 15px rgba(59, 130, 246, 0.7));
+      }
+      100% {
+        transform: scale(1) rotateY(1080deg) translateY(0deg);
+        filter: brightness(1);
+      }
     }
 
     @keyframes madelonGlow {
       0% { box-shadow: 0 0 10px #a855f7, 0 0 20px #ec4899; }
       100% { box-shadow: 0 0 25px #3b82f6, 0 0 40px #a855f7; }
-    }
-
-    @keyframes madelonFloat {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      50% { transform: translateY(-10px) rotate(2deg); }
     }
 
     /* Stack Badge Sign */
@@ -189,73 +205,18 @@
       </div>
     </div>
   </div>
-  <!-- Draw Stack Banner (Displays when someone is stacking +2/+4) -->
-<div id="stack-counter-banner" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff4757; color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 1.2rem; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: pulse 1s infinite;">
-  ⚠️ Stack Penalty: <span id="stack-count-num">0</span> Cards!
-</div>
 
-<!-- Victory Fireworks Overlay -->
-<div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; text-align: center;">
-  <div class="fireworks-container"></div>
-  <h1 id="winner-text" style="color: #ffd700; font-size: 3.5rem; text-shadow: 0 0 20px #ff4500; margin-bottom: 10px;"></h1>
-  <p style="color: white; font-size: 1.5rem;">Has conquered ABDU-NO!</p>
-  <button onclick="location.reload()" style="margin-top: 30px; padding: 12px 30px; font-size: 1.2rem; background: #2ed573; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Play Again</button>
-</div>
-
-<style>
-@keyframes pulse {
-  0% { transform: translateX(-50%) scale(1); }
-  50% { transform: translateX(-50%) scale(1.08); }
-  100% { transform: translateX(-50%) scale(1); }
-}
-
-/* Simple CSS Fireworks Sparkles */
-.firework-spark {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  animation: explode 1s ease-out forwards;
-}
-@keyframes explode {
-  0% { transform: translate(0, 0) scale(1); opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
-}
-@keyframes pulse {
-    0% { transform: translateX(-50%) scale(1); }
-    50% { transform: translateX(-50%) scale(1.08); }
-    100% { transform: translateX(-50%) scale(1); }
-  }
-
-  .firework-spark {
-    position: absolute;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    animation: explode 1s ease-out forwards;
-  }
-  @keyframes explode {
-    0% { transform: translate(0, 0) scale(1); opacity: 1; }
-    100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
-  }
-</style>
-
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="client.js"></script>
-  <!-- Draw Stack Banner -->
-  <div id="stack-counter-banner" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff4757; color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 1.2rem; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: pulse 1s infinite;">
+  <div id="stack-counter-banner" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff4757; color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 1.2rem; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
     ⚠️ Stack Penalty: <span id="stack-count-num">0</span> Cards!
   </div>
 
-  <!-- Victory Fireworks Overlay -->
   <div id="victory-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; text-align: center;">
     <div class="fireworks-container"></div>
     <h1 id="winner-text" style="color: #ffd700; font-size: 3.5rem; text-shadow: 0 0 20px #ff4500; margin-bottom: 10px;"></h1>
     <p style="color: white; font-size: 1.5rem;">Has conquered ABDU-NO!</p>
     <button onclick="location.reload()" style="margin-top: 30px; padding: 12px 30px; font-size: 1.2rem; background: #2ed573; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Play Again</button>
   </div>
-  <!-- Madelon Mode Selection Modal -->
+
   <div id="madelon-modal" class="modal-overlay">
     <div class="modal-box">
       <h3>Choose Madelon Ability</h3>
@@ -265,5 +226,8 @@
       </div>
     </div>
   </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
 </body>
 </html>
