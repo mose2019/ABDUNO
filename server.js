@@ -107,7 +107,38 @@ io.on('connection', (socket) => {
     broadcastGameState(roomId);
   });
 
-socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
+  // Reconnection Handler for Lag Recovery
+  socket.on('reconnectPlayer', ({ roomId, playerName }) => {
+    const room = rooms[roomId];
+    if (!room) return;
+
+    let player = room.players.find(p => p.name === playerName);
+    
+    if (player) {
+      player.id = socket.id;
+    } else {
+      player = {
+        id: socket.id,
+        name: playerName,
+        hand: [],
+        calledAbduno: false,
+        abdunoTimer: null,
+        usedMadelonPlus6: false,
+        usedMadelonNullify: false
+      };
+      for (let i = 0; i < 7; i++) {
+        if (room.deck.length > 0) player.hand.push(room.deck.pop());
+      }
+      room.players.push(player);
+    }
+
+    socket.join(roomId);
+    socket.emit('roomJoined', { roomId });
+    socket.emit('handUpdate', player.hand);
+    broadcastGameState(roomId);
+  });
+
+  socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
     const room = rooms[roomId];
     if (!room) return;
 
@@ -128,10 +159,14 @@ socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
 
     // Stack Interception Rules
     if (room.drawStack > 0) {
-      const isPlusCard = firstCard.value === '+2' || firstCard.value === '+4' || firstCard.value === 'madelon';
-      const isMadelonNullify = (firstCard.value === 'madelon' && madelonMode === 'nullify');
-      const isColorMatchSkip = (firstCard.value === 'skip' && firstCard.color === top.color);
-      const isColorMatchReverse = (firstCard.value === 'reverse' && firstCard.color === top.color);
+      const cardVal = (firstCard.value || '').toLowerCase().trim();
+      const cardColor = (firstCard.color || '').toLowerCase().trim();
+      const topColor = (top.color || '').toLowerCase().trim();
+
+      const isPlusCard = cardVal === '+2' || cardVal === '+4' || cardVal === 'madelon';
+      const isMadelonNullify = (cardVal === 'madelon' && madelonMode === 'nullify');
+      const isColorMatchSkip = (cardVal === 'skip' && cardColor === topColor);
+      const isColorMatchReverse = (cardVal === 'reverse' && cardColor === topColor);
 
       if (!isPlusCard && !isMadelonNullify && !isColorMatchSkip && !isColorMatchReverse) {
         return socket.emit('errorMessage', `You must stack (+2/+4), pass/reverse with matching color skip/reverse, or nullify with Madelon!`);
@@ -147,7 +182,7 @@ socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
       if (!isValidPlay) return socket.emit('errorMessage', 'Invalid move! Card color or value does not match.');
     }
 
- // Process Madelon Rules & Per-Round Usage Limits
+    // Process Madelon Rules & Per-Round Usage Limits
     if (firstCard.value === 'madelon') {
       if (madelonMode === 'nullify') {
         if (player.usedMadelonNullify) return socket.emit('errorMessage', 'You have already used Madelon Nullify this round!');
@@ -167,15 +202,14 @@ socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
       room.discardPile.push(card);
     });
 
-
     // Remove played cards from hand
     player.hand = player.hand.filter((_, idx) => !cardIndices.includes(idx));
     
     // Check for Win Condition
     if (player.hand.length === 0) {
-    io.to(roomId).emit('gameOver', { winner: player.name });
-    io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `🏆 ${player.name} has won the game!` });
-    return; // Stop further execution for this turn
+      io.to(roomId).emit('gameOver', { winner: player.name });
+      io.to(roomId).emit('chatUpdate', { name: 'SYSTEM', message: `🏆 ${player.name} has won the game!` });
+      return; 
     }
 
     // Update Top Card
@@ -196,10 +230,15 @@ socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
     // 2-Player Logic Adjustments for Skip and Reverse
     if (room.players.length === 2) {
       if (skipCount > 0 || (reverseCount % 2 !== 0)) {
-        step = 0; // Turn stays with the active player
+        step = 0; 
       }
     } else {
       if (skipCount > 0) step += skipCount;
+    }
+
+    // Clear active stack penalty if intercepted by a matching Skip or Reverse
+    if (room.drawStack > 0 && (skipCount > 0 || reverseCount > 0)) {
+      room.drawStack = 0;
     }
 
     // Check ABDU-NO state & 5-Second Penalty Timer Initiation
@@ -231,7 +270,6 @@ socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
 
     const player = room.players[playerIndex];
 
-    // If taking a stack, draw the whole stack and DO NOT pass turn (player must still play)
     if (room.drawStack > 0) {
       drawPenaltyCards(room, player, room.drawStack);
       room.drawStack = 0;
@@ -240,7 +278,6 @@ socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
       return;
     }
 
-    // Otherwise, continuous draw until finding an eligible playable card
     let foundPlayable = false;
     while (!foundPlayable) {
       if (room.deck.length === 0) {
@@ -269,7 +306,6 @@ socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
 
     const caller = room.players.find(p => p.id === socket.id);
 
-    // Call Out Another Player
     if (targetPlayerId) {
       const target = room.players.find(p => p.id === targetPlayerId);
       if (target && target.hand.length === 1 && !target.calledAbduno) {
@@ -282,7 +318,6 @@ socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
       return;
     }
 
-    // Self-Call ABDU-NO
     if (caller && caller.hand.length === 1) {
       caller.calledAbduno = true;
       if (caller.abdunoTimer) clearTimeout(caller.abdunoTimer);
@@ -294,7 +329,6 @@ socket.on('playCards', ({ roomId, cardIndices, chosenColor, madelonMode }) => {
     }
   });
 
-  
   // Room Chat Event Handler
   socket.on('chatMessage', ({ roomId, message }) => {
     const room = rooms[roomId];
