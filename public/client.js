@@ -1,3 +1,12 @@
+// Auto-reconnect if session data exists in localStorage
+window.addEventListener('load', () => {
+  const savedRoom = localStorage.getItem('abdu_roomId');
+  const savedName = localStorage.getItem('abdu_playerName');
+  
+  if (savedRoom && savedName) {
+    socket.emit('reconnectPlayer', { roomId: savedRoom, playerName: savedName });
+  }
+});
 const socket = io();
 
 let currentRoomId = null;
@@ -200,10 +209,17 @@ socket.on("handUpdate", (hand) => {
   });
 });
 
+// Unified Game State Update Listener
 socket.on("gameStateUpdate", (state) => {
+  // 1. Update Discard Pile & Madelon Animation Trigger
   if (state.topCard && discardPileEl) {
     const isMadelon = state.topCard.value === 'madelon' || state.topCard.color === 'madelon';
-    discardPileEl.className = `card card-${(state.topCard.color || 'wild').toLowerCase()} ${isMadelon ? 'madelon-card' : ''}`;
+    
+    discardPileEl.className = `card card-${(state.topCard.color || 'wild').toLowerCase()}`;
+    if (isMadelon) {
+      void discardPileEl.offsetWidth; // Force DOM reflow to restart CSS keyframe animation
+      discardPileEl.classList.add('madelon-card');
+    }
 
     const imgUrl = getCardImagePath(state.topCard);
     const img = new Image();
@@ -237,11 +253,23 @@ socket.on("gameStateUpdate", (state) => {
     }
   }
 
+  // 2. Update Stack Counter Banner
+  const stackBanner = document.getElementById('stack-counter-banner');
+  const stackNum = document.getElementById('stack-count-num');
+  if (state.drawStack > 0) {
+    stackNum.innerText = state.drawStack;
+    stackBanner.style.display = 'block';
+  } else {
+    stackBanner.style.display = 'none';
+  }
+
+  // 3. Update Direction Ring
   if (directionRing) {
     if (state.direction === -1) directionRing.classList.add("reverse");
     else directionRing.classList.remove("reverse");
   }
 
+  // 4. Update Player List & Call-Out Buttons
   if (playerListEl) {
     playerListEl.innerHTML = "";
     roomPlayers = state.players;
@@ -250,7 +278,6 @@ socket.on("gameStateUpdate", (state) => {
       pEl.className = `player-card ${p.id === state.activePlayerId ? 'active' : ''}`;
       pEl.innerHTML = `<div><strong>${p.name}</strong> (${p.cardCount} cards)</div>`;
 
-      // Call-out button for targets with 1 card who haven't called ABDU-NO
       if (p.id !== socket.id && p.cardCount === 1 && !p.calledAbduno) {
         const callOutBtn = document.createElement("button");
         callOutBtn.style.cssText = "padding:2px 6px; font-size:10px; background:#ef4444; color:white; border-radius:4px; margin-left:6px;";
@@ -263,20 +290,6 @@ socket.on("gameStateUpdate", (state) => {
     });
   }
 });
-// Update Stack Counter dynamically from game state
-socket.on('gameStateUpdate', (state) => {
-  const stackBanner = document.getElementById('stack-counter-banner');
-  const stackNum = document.getElementById('stack-count-num');
-  
-  if (state.drawStack > 0) {
-    stackNum.innerText = state.drawStack;
-    stackBanner.style.display = 'block';
-  } else {
-    stackBanner.style.display = 'none';
-  }
-  
-  // ... keep the rest of your existing gameStateUpdate code here ...
-});
 
 // Handle Victory & Fireworks
 socket.on('gameOver', ({ winner }) => {
@@ -285,15 +298,15 @@ socket.on('gameOver', ({ winner }) => {
   winnerText.innerText = `${winner} WINS!`;
   modal.style.display = 'flex';
   
-  // Trigger fireworks particle effect
   launchFireworks();
 });
 
 function launchFireworks() {
   const container = document.querySelector('.fireworks-container');
+  if (!container) return;
   const colors = ['#ff4757', '#2ed573', '#ffa502', '#1e90ff', '#9b59b6', '#ffd700'];
   
-   for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 5; i++) {
     setTimeout(() => {
       const x = window.innerWidth * (0.2 + Math.random() * 0.6);
       const y = window.innerHeight * (0.2 + Math.random() * 0.4);
