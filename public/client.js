@@ -121,9 +121,10 @@ socket.on("chatUpdate", ({ name, message }) => {
   const msgEl = document.createElement("div");
   msgEl.innerHTML = `<strong style="color:var(--accent-blue, #3b82f6);">${name}:</strong> ${message}`;
   chatBox.appendChild(msgEl);
+  
+  // Force scroll down to the newest message
   chatBox.scrollTop = chatBox.scrollHeight;
 });
-
 // Asset Path Normalizer for all Wild, Action, and Color variations
 function getCardImagePath(card) {
   if (!card) return 'assets/card-back.png';
