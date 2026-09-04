@@ -2,27 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>ABDU-NO Online</title>
   <style>
     :root {
       --bg-dark: #0b0f19;
-      --panel-bg: rgba(15, 23, 42, 0.85);
+      --panel-bg: rgba(15, 23, 42, 0.9);
       --accent-blue: #38bdf8;
       --accent-gold: #d4af37;
       --border-color: rgba(255, 255, 255, 0.1);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg-dark); color: #ffffff; height: 100vh; overflow: hidden; }
 
-    #lobby-screen { text-align: center; display: flex; flex-direction: column; gap: 15px; justify-content: center; align-items: center; height: 100vh; }
-    .lobby-box { background: #1e293b; padding: 30px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; width: 320px; }
-    input { padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: #0f172a; color: white; width: 100%; text-align: center; }
+    #lobby-screen { text-align: center; display: flex; flex-direction: column; gap: 15px; justify-content: center; align-items: center; height: 100vh; padding: 20px; }
+    .lobby-box { background: #1e293b; padding: 30px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; }
+    input { padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); background: #0f172a; color: white; width: 100%; text-align: center; font-size: 16px; }
     button { padding: 12px 24px; font-size: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; background: var(--accent-blue); color: #0f172a; transition: all 0.2s; }
     button:hover { background: #7dd3fc; transform: translateY(-2px); }
 
-    #game-screen { display: none; width: 100vw; height: 100vh; position: relative; }
+    #game-screen { display: none; width: 100vw; height: 100vh; position: relative; overflow: hidden; }
 
     #left-sidebar { position: absolute; left: 20px; top: 20px; bottom: 20px; width: 260px; background: var(--panel-bg); backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px; z-index: 10; }
     .sidebar-title { font-weight: bold; font-size: 14px; letter-spacing: 1px; color: var(--accent-blue); text-transform: uppercase; }
@@ -35,12 +35,12 @@
     .spotify-controls { display: flex; gap: 6px; }
     .spotify-controls input { text-align: left; padding: 8px; font-size: 12px; }
     .spotify-controls button { padding: 8px 12px; font-size: 12px; }
-    #spotify-container { width: 100%; height: 150px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--border-color); margin-top: 4px; }
+    #spotify-container { width: 100%; height: 130px; border-radius: 12px; overflow: hidden; background: #000; border: 1px solid var(--border-color); margin-top: 4px; }
     #spotify-container iframe { width: 100%; height: 100%; border: none; }
 
     #chat-box { flex: 1; background: rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 10px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
     .chat-input-row { display: flex; gap: 8px; }
-    .chat-input-row input { flex: 1; padding: 8px; text-align: left; }
+    .chat-input-row input { flex: 1; padding: 8px; text-align: left; font-size: 14px; }
 
     /* Added perspective for true 3D card spins */
     #table-area { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%); width: 420px; height: 420px; perspective: 1000px; }
@@ -108,20 +108,48 @@
       100% { transform: scale(1.15); }
     }
 
-    #bottom-dock { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 20; width: 90%; }
-    .action-bar { display: flex; gap: 12px; }
+    #bottom-dock { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; z-index: 20; width: 90%; max-width: 600px; }
+    .action-bar { display: flex; gap: 12px; width: 100%; justify-content: center; }
+    .action-bar button { flex: 1; }
     .btn-abduno { background: #ef4444; color: white; }
     .btn-play { background: #10b981; color: white; }
     
-    #my-hand { display: flex; gap: -20px; padding: 10px; max-width: 100%; overflow-x: auto; justify-content: center; min-height: 155px; }
-    #my-hand .card { margin-left: -20px; cursor: pointer; }
+    #my-hand { display: flex; gap: -20px; padding: 10px; max-width: 100%; overflow-x: auto; justify-content: flex-start; min-height: 155px; width: 100%; -webkit-overflow-scrolling: touch; }
+    #my-hand .card { margin-left: -20px; cursor: pointer; flex-shrink: 0; }
     #my-hand .card:first-child { margin-left: 0; }
     #my-hand .card:hover { transform: translateY(-15px); z-index: 30; }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; }
-    .modal-box { background: #1e293b; padding: 25px; border-radius: 16px; text-align: center; display: flex; flex-direction: column; gap: 15px; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
+    .modal-box { background: #1e293b; padding: 25px; border-radius: 16px; text-align: center; display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 320px; }
     .color-grid { display: flex; gap: 10px; justify-content: center; }
     .color-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; }
+
+    /* MOBILE RESPONSIVE OVERRIDES (Screens <= 900px) */
+    @media (max-width: 900px) {
+      body { overflow-y: auto; height: auto; position: static; }
+      #game-screen { display: none; height: 100vh; overflow: hidden; position: relative; }
+      
+      #left-sidebar { 
+        position: fixed; top: 10px; left: 10px; right: 10px; bottom: auto; 
+        width: auto; height: auto; max-height: 125px; padding: 10px; gap: 5px; 
+        background: rgba(15, 23, 42, 0.95); font-size: 12px;
+      }
+      #left-sidebar .sidebar-title { font-size: 11px; }
+      #left-sidebar .room-display { padding: 4px; font-size: 12px; }
+      #player-list { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+      .player-card { min-width: 120px; padding: 6px; font-size: 11px; flex-shrink: 0; }
+
+      #right-sidebar { 
+        display: none !important; 
+      }
+
+      #table-area { top: 40%; width: 280px; height: 280px; }
+      #direction-ring { width: 280px; height: 280px; }
+      .card { width: 70px; height: 105px; }
+
+      #bottom-dock { bottom: 10px; width: 95%; padding: 0; }
+      #my-hand { min-height: 125px; padding: 5px; }
+    }
   </style>
 </head>
 <body>
